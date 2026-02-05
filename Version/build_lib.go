@@ -20,7 +20,7 @@ const CLEAN_VERSION_SRC = 0
 const KEIL_PATH = `E:\Keil`
 
 func run(cmd string, args ...string) error {
-	fmt.Printf("[CMD] %s %v\n", cmd, args)
+	// fmt.Printf("[CMD] %s %v\n", cmd, args)
 	c := exec.Command(cmd, args...)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
