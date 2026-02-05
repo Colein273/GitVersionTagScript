@@ -200,6 +200,8 @@ func main() {
 	fmt.Fprintln(fc, "    fmc_unlock();")
 	fmt.Fprintln(fc, "    fmc_sector_erase(CTL_SECTOR_NUMBER_5);")
 	fmt.Fprintln(fc, "    fmc_byte_program(VERSION_FLASH_BASE + 0x00, FW_ALLOW_FLAG);")
+	fmt.Fprintln(fc, "    fmc_byte_program(VERSION_FLASH_BASE + 0x01, FW_DIRTY_FLAG);")
+	fmt.Fprintln(fc, "    fmc_word_program(VERSION_FLASH_BASE + 0x04, FW_GIT_TAG_HEX);")
 	fmt.Fprintln(fc, "    fmc_lock();")
 	fmt.Fprintln(fc, "}")
 }
