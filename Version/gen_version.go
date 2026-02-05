@@ -82,7 +82,7 @@ func main() {
 		gitHash = "nogit"
 	}
 
-	dirty := runGit("status", "--porcelain") != ""
+	dirty := runGit("status", "--porcelain", "--untracked-files=no") != ""
 
 	/* ---------- 解析 vX.Y.Z ---------- */
 	tagClean := strings.TrimPrefix(gitTag, "v")
@@ -164,11 +164,15 @@ func main() {
 	fmt.Fprintf(fc, "#define FW_GIT_HASH      \"%s\"\n", gitHash)
 	fmt.Fprintf(fc, "#define FW_GIT_TAG       \"%s\"\n", gitTag)
 	fmt.Fprintf(fc, "#define FW_GIT_TAG_HEX   0x%08X\n", gitTagHex)
+	fmt.Fprintf(fc, "// 代码是否修改标志位:0为代码无修改,1为代码有修改 \n")
 	fmt.Fprintf(fc, "#define FW_DIRTY_FLAG    %d\n", boolToInt(dirty))
+	fmt.Fprintf(fc, "// 设备是否可用标志位:0为设备不可用,1为设备可用 \n")
 	fmt.Fprintf(fc, "#define FW_ALLOW_FLAG    %d\n", boolToInt(allowPrint))
 	fmt.Fprintln(fc)
 
+	fmt.Fprintf(fc, "// 有效构建时间(上次提交时间码) \n")
 	fmt.Fprintf(fc, "#define FW_BD_REALTIME  \"%s\"\n", buildRealtime)
+	fmt.Fprintf(fc, "// 有效构建版本(上次提交版本号) \n")
 	fmt.Fprintf(fc, "#define FW_BD_REALNUM   \"%s\"\n", buildRealnum)
 	fmt.Fprintf(fc, "#define FW_BUILD_TIME  \"%s\"\n", buildTime)
 	fmt.Fprintf(fc, "#define FW_BUILD_HOST  \"%s\"\n", buildHost)
