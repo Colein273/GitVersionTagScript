@@ -66,7 +66,7 @@ git add "$VERSION_FILE"
 # ===============================
 # 6. 创建 tag（基于刚刚的 commit）
 # ===============================
-git tag -a "$TAG_NAME_BUILD" -m "Release ${TAG_NAME_BUILD}"
+git tag -a "$TAG_NAME" -m "Release ${TAG_NAME_BUILD}"
 
 echo "[post-commit] ✔ Tag created: $TAG_NAME_BUILD"
 echo "[post-commit] ℹ version_base.txt updated and staged for next commit"
