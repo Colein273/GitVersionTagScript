@@ -1,5 +1,10 @@
 0、
 需要配置Keil的地址，设备的白名单
+需要安装Python
+py构建exe
+pyinstaller -F build_lib.py
+pyinstaller -F gen_version.py
+再从dist中取出即可使用
 1、
 将该Version文件夹移至工程根目录下，一定需要包含“gd32Lib”
 2、
