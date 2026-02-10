@@ -12,8 +12,6 @@ Keil5 “option for target” -- user -- build before 前勾选加入
 Version/gen_version.exe
 Version/build_lib.exe
 
-
-
 pyinstaller -F build_lib.py
 pyinstaller -F gen_version.py
 pyinstaller -F create_versionTag.py
