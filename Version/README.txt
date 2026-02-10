@@ -14,6 +14,13 @@ Version/build_lib.exe
 
 
 
+pyinstaller -F build_lib.py
+pyinstaller -F gen_version.py
+pyinstaller -F create_versionTag.py
+
+"D:\Program Files\Git\bin\bash.exe" Version/bump_version.sh
+
+
 
 
 
