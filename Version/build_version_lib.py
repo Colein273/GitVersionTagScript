@@ -4,10 +4,7 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 
-# ================================
-# 全局配置
-# ================================
-
+# 全局配置 
 PROJECT_NAME = "GD32-Communication-Module"
 BUILD_TYPE   = "CommModuleForGD32.uvprojx"
 PRODUCT_NAME = "CommModuleForGD32"
@@ -15,22 +12,18 @@ MCU_TYPE     = "GD32F450"
 PLATFORM     = "Keil5"
 FLASH_BASE   = "0x08020000"
 
-# 0 = 保留 version.c / version.h
-# 1 = 生成 lib 后删除
+# 0 = 保留 version.c / version.h ||| 1 = 生成 lib 后删除
 CLEAN_VERSION_SRC = 0
-
+# Keil软件地址
 KEIL_PATH = Path(r"E:\Keil")
-
+# 设备白名单
 ALLOW_HOSTS = {
     "LAPTOP-Q2N29D5I",
     "BuildServer",
     "YCY-Laptop",
 }
 
-# ================================
-# 基础工具函数
-# ================================
-
+# 基础配置
 def get_app_dir() -> Path:
     if getattr(sys, "frozen", False):
         return Path(sys.executable).resolve().parent
@@ -72,10 +65,7 @@ def read_key_value_file(path: Path) -> dict:
 def bool_to_int(b: bool) -> int:
     return 1 if b else 0
 
-# ================================
-# 生成 version.c / version.h
-# ================================
-
+# 生成 version.c / version.h 
 def generate_version_files(script_dir: Path):
     git_hash = run_git("rev-parse", "--short", "HEAD") or "nogit"
     dirty = bool(run_git("status", "--porcelain", "--untracked-files=no"))
@@ -145,10 +135,7 @@ def generate_version_files(script_dir: Path):
 
     print("[OK] version.c / version.h generated")
 
-# ================================
-# 编译并打包静态库
-# ================================
-
+# 编译并打包静态库 
 def build_static_lib(script_dir: Path):
     project_root = script_dir.parent
 
@@ -199,10 +186,7 @@ def build_static_lib(script_dir: Path):
 
     print("[SUCCESS] Static library built:", lib_path)
 
-# ================================
-# 主入口
-# ================================
-
+# 主函数
 def main():
     script_dir = get_app_dir()
     generate_version_files(script_dir)
