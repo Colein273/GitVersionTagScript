@@ -13,6 +13,7 @@ BUILD_TYPE   = "CommModuleForGD32.uvprojx"
 PRODUCT_NAME = "CommModuleForGD32"
 MCU_TYPE     = "GD32F450"
 PLATFORM     = "Keil5"
+FLASH_BASE   = "0x08020000"
 
 # 0 = 保留 version.c / version.h
 # 1 = 生成 lib 后删除
@@ -76,14 +77,8 @@ def bool_to_int(b: bool) -> int:
 # ================================
 
 def generate_version_files(script_dir: Path):
-    # git_tag = run_git("tag", "--list", "v*", "--sort=-v:refname")
-    # git_tag = git_tag.splitlines()[0] if git_tag else "v0.0.0"
     git_hash = run_git("rev-parse", "--short", "HEAD") or "nogit"
     dirty = bool(run_git("status", "--porcelain", "--untracked-files=no"))
-    # parts = git_tag.lstrip("v").split(".")
-    # major = int(parts[0]) if len(parts) > 0 and parts[0].isdigit() else 0
-    # minor = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
-    # patch = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 0
     base_kv = read_key_value_file(script_dir / "version_base.txt")
     major = base_kv.get("MAJOR", "0")
     minor = base_kv.get("MINOR", "0")    
@@ -135,7 +130,7 @@ def generate_version_files(script_dir: Path):
         fc.write(f'const char FW_MCU_TYPE[] = "{MCU_TYPE}";\n')
         fc.write(f'const char FW_PLATFORM[] = "{PLATFORM}";\n\n')
 
-        fc.write("#define VERSION_FLASH_BASE ((uint32_t)0x08020000)\n\n")
+        fc.write(f"#define VERSION_FLASH_BASE ((uint32_t){FLASH_BASE})\n\n")
         fc.write(
             "void Write_Version_Info(void)\n"
             "{\n"
