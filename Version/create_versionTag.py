@@ -54,6 +54,36 @@ def create_git_tag(version):
         return False
 
 
+def run(cmd):
+    return subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8"
+    )
+
+def tag_exists(tag):
+    r = run(["git", "tag", "-l", tag])
+    return tag in r.stdout.split()
+
+def create_tag(tag):
+
+    if tag_exists(tag):
+        print(f"[INFO] Tag {tag} already exists, skip creating.")
+        return
+
+    r = run([
+        "git", "tag", "-a",
+        tag,
+        "-m", f"Release {tag}"
+    ])
+
+    if r.returncode != 0:
+        print("[ERROR] Failed to create tag")
+        sys.exit(1)
+
+    print(f"[OK] Tag created: {tag}")
 # ------------------------------------------------
 # GUI 提交
 # ------------------------------------------------
@@ -65,13 +95,9 @@ def submit():
 
     version = f"v{major}.{minor}.{patch}"
 
-    ok = create_git_tag(version)
+    create_tag(version)
+    root.destroy()
 
-    if ok:
-        messagebox.showinfo("Success", f"Tag created:\n{version}")
-        root.destroy()
-    else:
-        messagebox.showerror("Error", "Git tag creation failed")
 
 
 # ------------------------------------------------
