@@ -1,128 +1,118 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
+import tkinter as tk
+from tkinter import messagebox
 import subprocess
-import sys
-from pathlib import Path
-from datetime import datetime
+import re
 
-# ===============================
-# UTF-8 输出（防止 GBK 炸）
-# ===============================
-try:
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
-except Exception:
-    pass
 
-# ===============================
-# 路径策略（与 build_lib 完全一致）
-# ===============================
-REPO_ROOT = Path.cwd()
-VERSION_FILE = REPO_ROOT / "Version" / "version_base.txt"
-
-TAG_PREFIX = "v"
-
-# ===============================
-# 工具函数
-# ===============================
-def run(cmd, check=True):
-    return subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        encoding="utf-8",
-        check=check
-    )
-
-def die(msg):
-    print(f"[ERROR] {msg}")
-    sys.exit(1)
-
-def info(msg):
-    print(f"[INFO] {msg}")
-
-# ===============================
-# version_base.txt 解析
-# ===============================
-def read_version_file(path: Path):
-    kv = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if "=" in line:
-            k, v = line.split("=", 1)
-            kv[k.strip()] = v.strip()
-    return kv
-
-def write_version_file(path: Path, kv: dict):
-    content = (
-        f"MAJOR={kv['MAJOR']}\n"
-        f"MINOR={kv['MINOR']}\n"
-        f"PATCH={kv['PATCH']}\n"
-        f"BUILD={kv['BUILD']}\n"
-        f"BUILD_REALTIME={kv['BUILD_REALTIME']}\n"
-        f"BUILD_REALNUM={kv['BUILD_REALNUM']}\n"
-    )
-    path.write_text(content, encoding="utf-8")
-
-# ===============================
-# 主逻辑
-# ===============================
-def main():
-
-    # ---------- git 检查 ----------
+# ------------------------------------------------
+# 执行 git 命令
+# ------------------------------------------------
+def run_git(cmd):
     try:
-        run(["git", "--version"])
-    except Exception:
-        die("git not found")
+        result = subprocess.check_output(cmd, shell=True)
+        return result.decode().strip()
+    except:
+        return ""
 
-    if not VERSION_FILE.exists():
-        die(f"{VERSION_FILE} not found")
 
-    # ---------- 读取版本 ----------
-    kv = read_version_file(VERSION_FILE)
-    for k in ("MAJOR", "MINOR", "PATCH", "BUILD"):
-        if k not in kv:
-            die("version_base.txt format error")
+# ------------------------------------------------
+# 获取当前最新 tag
+# ------------------------------------------------
+def get_last_tag():
 
-    major = kv["MAJOR"]
-    minor = kv["MINOR"]
-    patch = kv["PATCH"]
-    build = int(kv["BUILD"]) + 1
+    tag = run_git("git describe --tags --abbrev=0")
 
-    base_tag = f"{TAG_PREFIX}{major}.{minor}.{patch}"
-    build_tag = f"{base_tag}.{build}"
+    if tag == "":
+        return "v1.0.0"
 
-    kv["BUILD"] = str(build)
-    kv["BUILD_REALTIME"] = datetime.now().strftime("%Y%m%d%H%M%S")
-    kv["BUILD_REALNUM"] = build_tag
+    return tag
 
-    write_version_file(VERSION_FILE, kv)
-    run(["git", "add", str(VERSION_FILE)])
 
-    info(f"version_base.txt updated → BUILD={build}")
+# ------------------------------------------------
+# 解析版本号
+# v1.2.3 -> (1,2,3)
+# ------------------------------------------------
+def parse_version(tag):
 
-    # ---------- 方案一：tag 只创建一次 ----------
-    tag_exists = run(
-        ["git", "rev-parse", base_tag],
-        check=False
-    ).returncode == 0
+    match = re.match(r"v(\d+)\.(\d+)\.(\d+)", tag)
 
-    if tag_exists:
-        info(f"tag {base_tag} already exists, skip")
+    if match:
+        return match.groups()
+
+    return ("1", "0", "0")
+
+
+# ------------------------------------------------
+# 创建 Git Tag
+# ------------------------------------------------
+def create_git_tag(version):
+
+    try:
+        subprocess.check_call(f"git tag {version}", shell=True)
+        return True
+    except:
+        return False
+
+
+# ------------------------------------------------
+# GUI 提交
+# ------------------------------------------------
+def submit():
+
+    major = entry_major.get()
+    minor = entry_minor.get()
+    patch = entry_patch.get()
+
+    version = f"v{major}.{minor}.{patch}"
+
+    ok = create_git_tag(version)
+
+    if ok:
+        messagebox.showinfo("Success", f"Tag created:\n{version}")
+        root.destroy()
     else:
-        run([
-            "git", "tag", "-a",
-            base_tag,
-            "-m", f"Release {build_tag}"
-        ])
-        info(f"tag created: {base_tag}")
+        messagebox.showerror("Error", "Git tag creation failed")
 
-    info("pre-commit hook finished")
 
-# ===============================
-if __name__ == "__main__":
-    main()
+# ------------------------------------------------
+# GUI 初始化
+# ------------------------------------------------
+root = tk.Tk()
+root.title("Create Firmware Version Tag")
+root.geometry("300x200")
+
+frame = tk.Frame(root)
+frame.pack(pady=20)
+
+
+# 读取最新版本
+last_tag = get_last_tag()
+major, minor, patch = parse_version(last_tag)
+
+
+# -------- MAJOR --------
+tk.Label(frame, text="主版本号 MAJOR").grid(row=0, column=0, padx=10, pady=5, sticky="e")
+entry_major = tk.Entry(frame, width=6)
+entry_major.insert(0, major)
+entry_major.grid(row=0, column=1)
+
+
+# -------- MINOR --------
+tk.Label(frame, text="次版本号 MINOR").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+entry_minor = tk.Entry(frame, width=6)
+entry_minor.insert(0, minor)
+entry_minor.grid(row=1, column=1)
+
+
+# -------- PATCH --------
+tk.Label(frame, text="修订号 PATCH").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+entry_patch = tk.Entry(frame, width=6)
+entry_patch.insert(0, patch)
+entry_patch.grid(row=2, column=1)
+
+
+# -------- BUTTON --------
+tk.Button(root, text="Create Version Tag", command=submit).pack(pady=20)
+
+
+root.mainloop()
