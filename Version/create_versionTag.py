@@ -15,16 +15,19 @@ def run_git(cmd):
         return ""
 
 
+# 获取仓库中最大版本号tag
 def get_last_tag():
-    tag = run_git("git describe --tags --abbrev=0")
 
-    if tag == "":
+    tags = run_git("git tag --list 'v*' --sort=-v:refname")
+
+    if tags == "":
         return "v1.0.0"
 
-    return tag
+    return tags.splitlines()[0]
 
 
 def parse_version(tag):
+
     m = re.match(r"v(\d+)\.(\d+)\.(\d+)", tag)
 
     if m:
@@ -34,6 +37,7 @@ def parse_version(tag):
 
 
 def tag_exists(tag):
+
     r = subprocess.run(
         ["git","rev-parse",tag],
         stdout=subprocess.PIPE,
@@ -45,11 +49,26 @@ def tag_exists(tag):
 
 def create_tag(tag):
 
-    subprocess.run([
+    r = subprocess.run([
         "git","tag",
         "-a",tag,
         "-m",f"Release {tag}"
     ])
+
+    return r.returncode == 0
+
+
+# ------------------------------------------------
+# 检测当前HEAD是否已经有tag
+# ------------------------------------------------
+def head_has_tag():
+
+    tags = run_git("git tag --points-at HEAD")
+
+    if tags == "":
+        return None
+
+    return tags.splitlines()[0]
 
 
 # ------------------------------------------------
@@ -68,6 +87,7 @@ def mode_changed():
         entry_minor.config(state="disabled",fg="gray")
         entry_patch.config(state="disabled",fg="gray")
 
+
 # ------------------------------------------------
 # 提交
 # ------------------------------------------------
@@ -75,11 +95,15 @@ def submit():
 
     mode = version_mode.get()
 
-    major = int(entry_major.get())
-    minor = int(entry_minor.get())
-    patch = int(entry_patch.get())
+    try:
+        major = int(entry_major.get())
+        minor = int(entry_minor.get())
+        patch = int(entry_patch.get())
+    except:
+        messagebox.showerror("Error","版本号必须为数字")
+        return
 
-    # 只在这里计算一次
+
     if mode == "major":
         major += 1
         minor = 0
@@ -98,32 +122,60 @@ def submit():
     elif mode == "custom":
         pass
 
+
     version = f"v{major}.{minor}.{patch}"
-           
-    tag_exists_flag = 0
+
+
+    # 检查tag是否存在
     if tag_exists(version):
+
         messagebox.showwarning(
             "Version Warning",
             f"该版本已有记录: {version}"
         )
-        tag_exists_flag = 1
+        return
 
-    create_tag(version)
-    if tag_exists_flag == 0:
-        messagebox.showinfo("Version info", f"该版本新建: {version}")
 
+    # 创建tag
+    if create_tag(version):
+
+        messagebox.showinfo(
+            "Version Info",
+            f"成功创建版本: {version}"
+        )
+
+    else:
+
+        messagebox.showerror(
+            "Error",
+            "创建Tag失败"
+        )
 
     root.destroy()
+
 
 # ------------------------------------------------
 # GUI
 # ------------------------------------------------
 root = tk.Tk()
 root.title("Create Firmware Version Tag")
-root.geometry("320x360")
+root.geometry("320x380")
 
 frame = tk.Frame(root)
 frame.pack(pady=10)
+
+
+# ------------------------------------------------
+# HEAD tag检测
+# ------------------------------------------------
+head_tag = head_has_tag()
+
+if head_tag:
+
+    messagebox.showwarning(
+        "HEAD Tag Detected",
+        f"当前提交已存在版本标签: {head_tag}"
+    )
 
 
 # 获取当前版本
@@ -144,7 +196,7 @@ tk.Label(frame,text="次版本号 MINOR").grid(row=1,column=0,padx=10,pady=5)
 entry_minor = tk.Entry(frame,width=6)
 entry_minor.grid(row=1,column=1)
 
-tk.Label(frame,text="修订号  PATCH").grid(row=2,column=0,padx=10,pady=5)
+tk.Label(frame,text="修订号 PATCH").grid(row=2,column=0,padx=10,pady=5)
 
 entry_patch = tk.Entry(frame,width=6)
 entry_patch.grid(row=2,column=1)
