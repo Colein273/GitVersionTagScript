@@ -16,7 +16,6 @@ def run_git(cmd):
 
 
 def get_last_tag():
-
     tag = run_git("git describe --tags --abbrev=0")
 
     if tag == "":
@@ -26,7 +25,6 @@ def get_last_tag():
 
 
 def parse_version(tag):
-
     m = re.match(r"v(\d+)\.(\d+)\.(\d+)", tag)
 
     if m:
@@ -36,7 +34,6 @@ def parse_version(tag):
 
 
 def tag_exists(tag):
-
     r = subprocess.run(
         ["git","rev-parse",tag],
         stdout=subprocess.PIPE,
@@ -56,19 +53,34 @@ def create_tag(tag):
 
 
 # ------------------------------------------------
-# 自动版本计算
+# UI状态控制
 # ------------------------------------------------
-def calc_next_version():
+def mode_changed():
 
-    if custom_var.get():
-        return
+    mode = version_mode.get()
+
+    if mode == "custom":
+        entry_major.config(state="normal",fg="black")
+        entry_minor.config(state="normal",fg="black")
+        entry_patch.config(state="normal",fg="black")
+    else:
+        entry_major.config(state="disabled",fg="gray")
+        entry_minor.config(state="disabled",fg="gray")
+        entry_patch.config(state="disabled",fg="gray")
+
+
+# ------------------------------------------------
+# 提交
+# ------------------------------------------------
+def submit():
+
+    mode = version_mode.get()
 
     major = int(entry_major.get())
     minor = int(entry_minor.get())
     patch = int(entry_patch.get())
 
-    mode = version_mode.get()
-
+    # 只在这里计算一次
     if mode == "major":
         major += 1
         minor = 0
@@ -81,63 +93,11 @@ def calc_next_version():
     elif mode == "patch":
         patch += 1
 
-    set_version(major,minor,patch)
+    elif mode == "none":
+        pass
 
-
-def set_version(a,b,c):
-
-    entry_major.config(state="normal")
-    entry_minor.config(state="normal")
-    entry_patch.config(state="normal")
-
-    entry_major.delete(0,tk.END)
-    entry_minor.delete(0,tk.END)
-    entry_patch.delete(0,tk.END)
-
-    entry_major.insert(0,a)
-    entry_minor.insert(0,b)
-    entry_patch.insert(0,c)
-
-    if not custom_var.get():
-        entry_major.config(state="disabled")
-        entry_minor.config(state="disabled")
-        entry_patch.config(state="disabled")
-
-
-# ------------------------------------------------
-# 自定义开关
-# ------------------------------------------------
-def toggle_custom():
-
-    if custom_var.get():
-
-        entry_major.config(state="normal",fg="black")
-        entry_minor.config(state="normal",fg="black")
-        entry_patch.config(state="normal",fg="black")
-
-        rb_major.config(state="disabled")
-        rb_minor.config(state="disabled")
-        rb_patch.config(state="disabled")
-
-    else:
-
-        entry_major.config(state="disabled",fg="gray")
-        entry_minor.config(state="disabled",fg="gray")
-        entry_patch.config(state="disabled",fg="gray")
-
-        rb_major.config(state="normal")
-        rb_minor.config(state="normal")
-        rb_patch.config(state="normal")
-
-
-# ------------------------------------------------
-# 提交
-# ------------------------------------------------
-def submit():
-
-    major = entry_major.get()
-    minor = entry_minor.get()
-    patch = entry_patch.get()
+    elif mode == "custom":
+        pass
 
     version = f"v{major}.{minor}.{patch}"
 
@@ -158,24 +118,15 @@ def submit():
 # ------------------------------------------------
 root = tk.Tk()
 root.title("Create Firmware Version Tag")
-root.geometry("320x240")
+root.geometry("320x360")
 
 frame = tk.Frame(root)
 frame.pack(pady=10)
 
+
 # 获取当前版本
 last_tag = get_last_tag()
 major,minor,patch = parse_version(last_tag)
-
-# 自定义开关
-custom_var = tk.BooleanVar()
-
-tk.Checkbutton(
-    root,
-    text="自定义版本号",
-    variable=custom_var,
-    command=toggle_custom
-).pack()
 
 
 # -----------------------
@@ -183,56 +134,80 @@ tk.Checkbutton(
 # -----------------------
 tk.Label(frame,text="主版本号 MAJOR").grid(row=0,column=0,padx=10,pady=5)
 
-entry_major = tk.Entry(frame,width=6,state="disabled",fg="gray")
+entry_major = tk.Entry(frame,width=6)
 entry_major.grid(row=0,column=1)
 
 tk.Label(frame,text="次版本号 MINOR").grid(row=1,column=0,padx=10,pady=5)
 
-entry_minor = tk.Entry(frame,width=6,state="disabled",fg="gray")
+entry_minor = tk.Entry(frame,width=6)
 entry_minor.grid(row=1,column=1)
 
-tk.Label(frame,text="修订号   PATCH").grid(row=2,column=0,padx=10,pady=5)
+tk.Label(frame,text="修订号  PATCH").grid(row=2,column=0,padx=10,pady=5)
 
-entry_patch = tk.Entry(frame,width=6,state="disabled",fg="gray")
+entry_patch = tk.Entry(frame,width=6)
 entry_patch.grid(row=2,column=1)
 
-set_version(major,minor,patch)
+
+entry_major.insert(0,major)
+entry_minor.insert(0,minor)
+entry_patch.insert(0,patch)
 
 
 # -----------------------
-# 自动升级选择
+# 五选一模式
 # -----------------------
-version_mode = tk.StringVar(value="patch")
+version_mode = tk.StringVar(value="none")
 
-# MAJOR
-rb_major = tk.Radiobutton(
-    frame,
-    text="+1",
+rb_none = tk.Radiobutton(
+    root,
+    text="无修改 (使用当前版本)",
     variable=version_mode,
-    value="major",
-    command=calc_next_version
+    value="none",
+    command=mode_changed
 )
-rb_major.grid(row=0,column=2,padx=10)
 
-# MINOR
-rb_minor = tk.Radiobutton(
-    frame,
-    text="+1",
-    variable=version_mode,
-    value="minor",
-    command=calc_next_version
-)
-rb_minor.grid(row=1,column=2,padx=10)
-
-# PATCH
 rb_patch = tk.Radiobutton(
-    frame,
-    text="+1",
+    root,
+    text="修订号：+1",
     variable=version_mode,
     value="patch",
-    command=calc_next_version
+    command=mode_changed
 )
-rb_patch.grid(row=2,column=2,padx=10)
+
+rb_minor = tk.Radiobutton(
+    root,
+    text="次版本号：+1",
+    variable=version_mode,
+    value="minor",
+    command=mode_changed
+)
+
+rb_major = tk.Radiobutton(
+    root,
+    text="主版本号：+1",
+    variable=version_mode,
+    value="major",
+    command=mode_changed
+)
+
+rb_custom = tk.Radiobutton(
+    root,
+    text="自定义版本号",
+    variable=version_mode,
+    value="custom",
+    command=mode_changed
+)
+
+
+rb_none.pack(anchor="w",padx=30)
+rb_patch.pack(anchor="w",padx=30)
+rb_minor.pack(anchor="w",padx=30)
+rb_major.pack(anchor="w",padx=30)
+rb_custom.pack(anchor="w",padx=30)
+
+
+mode_changed()
+
 
 # -----------------------
 # 提交
