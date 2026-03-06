@@ -44,5 +44,3 @@ IV、
 
 每次提交内容后将会运行hook，此时打开version_base.txt可以观察到BUILD补丁号递增+1
 
-
-
