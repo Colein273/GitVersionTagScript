@@ -102,14 +102,16 @@ def submit():
     version = f"v{major}.{minor}.{patch}"
 
     if tag_exists(version):
-
         messagebox.showwarning(
             "Version Warning",
             f"该版本已有记录: {version}"
         )
 
     create_tag(version)
-
+    messagebox.showinfo(
+        "Version info",
+        f"该版本新建: {version}"
+    )
     root.destroy()
 
 
@@ -198,13 +200,11 @@ rb_custom = tk.Radiobutton(
     command=mode_changed
 )
 
-
 rb_none.pack(anchor="w",padx=30)
-rb_patch.pack(anchor="w",padx=30)
-rb_minor.pack(anchor="w",padx=30)
 rb_major.pack(anchor="w",padx=30)
+rb_minor.pack(anchor="w",padx=30)
+rb_patch.pack(anchor="w",padx=30)
 rb_custom.pack(anchor="w",padx=30)
-
 
 mode_changed()
 
