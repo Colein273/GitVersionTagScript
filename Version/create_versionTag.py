@@ -128,26 +128,17 @@ def submit():
 
     # 检查tag是否存在
     if tag_exists(version):
-
         messagebox.showwarning(
             "Version Warning",
             f"该版本已有记录: {version}"
         )
 
-
     # 创建tag
-    if create_tag(version):
-
+    else: 
+        create_tag(version)
         messagebox.showinfo(
             "Version Info",
             f"成功创建版本: {version}"
-        )
-
-    else:
-
-        messagebox.showerror(
-            "Error",
-            "创建Tag失败"
         )
 
     root.destroy()
