@@ -99,18 +99,19 @@ def submit():
         pass
 
     version = f"v{major}.{minor}.{patch}"
-
+           
+    tag_exists_flag = 0
     if tag_exists(version):
         messagebox.showwarning(
             "Version Warning",
             f"该版本已有记录: {version}"
+            tag_exists_flag = 1
         )
 
     create_tag(version)
-    messagebox.showinfo(
-        "Version info",
-        f"该版本新建: {version}"
-    )
+    if tag_exists_flag == 0:
+        messagebox.showinfo("Version info", f"该版本新建: {version}")
+
     root.destroy()
 
 # ------------------------------------------------
