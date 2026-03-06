@@ -64,26 +64,20 @@ def run(cmd):
     )
 
 def tag_exists(tag):
-    r = run(["git", "tag", "-l", tag])
-    return tag in r.stdout.split()
+    r = subprocess.run(
+        ["git", "rev-parse", tag],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    return r.returncode == 0
+
 
 def create_tag(tag):
-
-    if tag_exists(tag):
-        print(f"[INFO] Tag {tag} already exists, skip creating.")
-        return
-
-    r = run([
-        "git", "tag", "-a",
-        tag,
+    subprocess.run([
+        "git", "tag",
+        "-a", tag,
         "-m", f"Release {tag}"
     ])
-
-    if r.returncode != 0:
-        print("[ERROR] Failed to create tag")
-        sys.exit(1)
-
-    print(f"[OK] Tag created: {tag}")
 # ------------------------------------------------
 # GUI 提交
 # ------------------------------------------------
@@ -94,11 +88,13 @@ def submit():
     patch = entry_patch.get()
 
     version = f"v{major}.{minor}.{patch}"
-
+    if tag_exists(version):
+        messagebox.showwarning(
+            "Version Warning",
+            f"该版本已有记录, 可查看: {version}\n\n"
+        )
     create_tag(version)
     root.destroy()
-
-
 
 # ------------------------------------------------
 # GUI 初始化
