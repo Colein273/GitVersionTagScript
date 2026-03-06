@@ -133,7 +133,6 @@ def submit():
             "Version Warning",
             f"该版本已有记录: {version}"
         )
-        return
 
 
     # 创建tag
