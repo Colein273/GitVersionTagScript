@@ -68,7 +68,6 @@ def mode_changed():
         entry_minor.config(state="disabled",fg="gray")
         entry_patch.config(state="disabled",fg="gray")
 
-
 # ------------------------------------------------
 # 提交
 # ------------------------------------------------
@@ -113,7 +112,6 @@ def submit():
         f"该版本新建: {version}"
     )
     root.destroy()
-
 
 # ------------------------------------------------
 # GUI
