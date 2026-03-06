@@ -128,7 +128,7 @@ def submit():
 
     # 检查tag是否存在
     if tag_exists(version):
-        messagebox.showwarning(
+        messagebox.showinfo(
             "Version Warning",
             f"该版本已有记录: {version}"
         )
