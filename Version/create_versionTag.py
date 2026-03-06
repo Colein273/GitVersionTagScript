@@ -18,7 +18,7 @@ def run_git(cmd):
 # 获取仓库中最大版本号tag
 def get_last_tag():
 
-    tags = run_git("git tag --list 'v*' --sort=-v:refname")
+    tags = run_git("git tag --sort=-v:refname")
 
     if tags == "":
         return "v1.0.0"
